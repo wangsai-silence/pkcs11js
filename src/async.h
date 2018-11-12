@@ -167,4 +167,37 @@ protected:
 	CK_OBJECT_HANDLE result;
 };
 
+#define ASYNC_BIP32_MASTER 0
+#define ASYNC_BIP32_CHILD 1
+
+class AsyncDeriveBIP32 : public Nan::AsyncWorker {
+public:
+        AsyncDeriveBIP32(
+		Nan::Callback *callback,
+		Scoped<PKCS11> pkcs11,
+		int type,
+		CK_SESSION_HANDLE hSession,
+		CK_OBJECT_HANDLE hBaseKey,
+		Scoped<Attributes> publicKeyTemplate,
+		Scoped<Attributes> privateKeyTemplate,
+		std::vector<CK_ULONG> path
+	) : AsyncWorker(callback), pkcs11(pkcs11), type(type), hSession(hSession), hBaseKey(hBaseKey), publicKeyTemplate(publicKeyTemplate), privateKeyTemplate(privateKeyTemplate), path(path) {}
+	~AsyncDeriveBIP32() {}
+
+	void Execute();
+	void HandleOKCallback();
+
+protected:
+	Scoped<PKCS11> pkcs11;
+	int type;
+	CK_SESSION_HANDLE hSession;
+	CK_OBJECT_HANDLE hBaseKey;
+	Scoped<Attributes> publicKeyTemplate;
+	Scoped<Attributes> privateKeyTemplate;
+	std::vector<CK_ULONG> path;
+        // Result
+	CK_OBJECT_HANDLE hPublicKey;
+	CK_OBJECT_HANDLE hPrivateKey;
+};
+
 #endif // INCLUDE_H_ASYNC

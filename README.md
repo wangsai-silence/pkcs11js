@@ -10,7 +10,7 @@
 
 We make a package called [Graphene](https://github.com/PeculiarVentures/graphene), it provides a simplistic Object Oriented interface for interacting with PKCS#11 devices, for most people this is the right level to build on. In some cases you may want to interact directly with the PKCS#11 API, if so PKCS11js is the package for you.
 
-PKCS#11 (also known as CryptoKI or PKCS11) is the standard interface for interacting with hardware crypto devices such as Smart Cards and Hardware Security Modules (HSMs). 
+PKCS#11 (also known as CryptoKI or PKCS11) is the standard interface for interacting with hardware crypto devices such as Smart Cards and Hardware Security Modules (HSMs).
 
 This was developed to the PKCS#11 2.30 specification, the 2.40 headers were not availible at the time we created this, it should be easy enough to extend it for the new version at a later date.
 
@@ -73,7 +73,7 @@ try {
     /**
     * Your app code here
     */
-    
+
     pkcs11.C_Logout(session);
     pkcs11.C_CloseSession(session);
 }
@@ -380,6 +380,16 @@ mod.C_Finalize();
 
 [More](https://developer.mozilla.org/en-US/docs/Mozilla/Projects/NSS/Reference/FC_Initialize) info about NSS params for `C_Initialize`
 
+### BIP32 Master and Child Key Pair Derivation
+
+Please see [bip32.js](examples/bip32.js) for an example of performing BIP32 master and child key pair derivations.
+
+The example requires installing sha256 and bn.js:
+```
+$ npm install sha256 bn.js
+```
+NOTE:  This requires a SafeNet Luna HSM with BIP32 support.
+
 ## Suitability
 At this time this solution should be considered suitable for research and experimentation, further code and security review is needed before utilization in a production application.
 
@@ -395,7 +405,7 @@ Please report bugs either as pull requests or as issues in the issue tracker. Gr
 - [Ruby PKCS #11 binding](https://github.com/larskanis/pkcs11)
 - [OCaml PKCS #11 binding](https://github.com/ANSSI-FR/caml-crush)
 - [OCaml PKCS #11 CLI](https://github.com/ANSSI-FR/opkcs11-tool)
-- [Go PKCS #11 binding](https://github.com/miekg/pkcs11) 
+- [Go PKCS #11 binding](https://github.com/miekg/pkcs11)
 - [PKCS #11 Admin](http://www.pkcs11admin.net)
 - [Node.js Foreign Function Interface](https://github.com/node-ffi/node-ffi)
 - [GOST PKCS#11 constants](https://github.com/romanovskiy-k/pkcs11/blob/master/rtpkcs11t.h)
@@ -408,5 +418,3 @@ Please report bugs either as pull requests or as issues in the issue tracker. Gr
 - [node-pcsc](https://github.com/santigimeno/node-pcsclite)
 - [PKCS#11 URIs](https://tools.ietf.org/html/rfc7512)
 - [Key Length Recommendations](http://www.keylength.com/en/compare/)
-
-

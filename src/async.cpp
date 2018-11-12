@@ -171,3 +171,34 @@ void AsyncDeriveKey::HandleOKCallback() {
 
 	callback->Call(2, argv, async_resource);
 }
+
+void AsyncDeriveBIP32::Execute() {
+	try {
+		switch (type) {
+			case ASYNC_BIP32_MASTER:
+				pkcs11->DeriveBIP32Master(hSession, hBaseKey, publicKeyTemplate, privateKeyTemplate, &hPublicKey, &hPrivateKey);
+				break;
+			case ASYNC_BIP32_CHILD:
+				pkcs11->DeriveBIP32Child(hSession, hBaseKey, publicKeyTemplate, privateKeyTemplate, &hPublicKey, &hPrivateKey, path);
+				break;
+		}
+	}
+	catch (Scoped<Error> e) {
+		this->SetErrorMessage(e->ToString()->c_str());
+	}
+}
+
+void AsyncDeriveBIP32::HandleOKCallback() {
+        Nan::HandleScope scope;
+
+        Local<Object> v8KeyPair = Nan::New<Object>();
+        v8KeyPair->Set(Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(hPrivateKey));
+        v8KeyPair->Set(Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(hPublicKey));
+
+        v8::Local<v8::Value> argv[] = {
+                Nan::Null(),
+                v8KeyPair
+        };
+
+        callback->Call(2, argv, async_resource);
+}

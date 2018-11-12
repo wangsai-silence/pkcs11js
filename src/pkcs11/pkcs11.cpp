@@ -1029,3 +1029,112 @@ void PKCS11::C_GenerateRandom(CK_SESSION_HANDLE hSession, char *data, size_t dat
 	}
 	CATCH_ERROR;
 }
+
+
+#define CKM_BIP32_MASTER_DERIVE (CKM_VENDOR_DEFINED + 0xE00)
+#define CKM_BIP32_CHILD_DERIVE (CKM_VENDOR_DEFINED + 0xE01)
+
+typedef struct CK_BIP32_MASTER_DERIVE_PARAMS {
+  CK_ATTRIBUTE_PTR pPublicKeyTemplate;
+  CK_ULONG         ulPublicKeyAttributeCount;
+  CK_ATTRIBUTE_PTR pPrivateKeyTemplate;
+  CK_ULONG         ulPrivateKeyAttributeCount;
+  CK_OBJECT_HANDLE hPublicKey; // output parameter
+  CK_OBJECT_HANDLE hPrivateKey; // output parameter
+} CK_BIP32_MASTER_DERIVE_PARAMS;
+
+typedef struct CK_BIP32_CHILD_DERIVE_PARAMS {
+  CK_ATTRIBUTE_PTR pPublicKeyTemplate;
+  CK_ULONG         ulPublicKeyAttributeCount;
+  CK_ATTRIBUTE_PTR pPrivateKeyTemplate;
+  CK_ULONG         ulPrivateKeyAttributeCount;
+  CK_ULONG_PTR     pulPath;
+  CK_ULONG         ulPathLen;
+  CK_OBJECT_HANDLE hPublicKey; // output parameter
+  CK_OBJECT_HANDLE hPrivateKey; // output parameter
+  CK_ULONG         ulPathErrorIndex; // output parameter
+} CK_BIP32_CHILD_DERIVE_PARAMS;
+
+void PKCS11::DeriveBIP32Master(
+	CK_SESSION_HANDLE hSession,
+	CK_OBJECT_HANDLE hBaseKey,
+	Scoped<Attributes> publicTmpl,
+	Scoped<Attributes> privateTmpl, CK_OBJECT_HANDLE_PTR pPublicKey, CK_OBJECT_HANDLE_PTR pPrivateKey
+
+) {
+	try {
+		auto pPublicKeyKeyTemplate = publicTmpl->Get();
+		auto pPrivateKeyTemplate = privateTmpl->Get();
+
+		CK_MECHANISM mechanism;
+
+		mechanism.mechanism = CKM_BIP32_MASTER_DERIVE;
+
+		CK_BIP32_MASTER_DERIVE_PARAMS params;
+		params.pPublicKeyTemplate = pPublicKeyKeyTemplate->items;
+		params.ulPublicKeyAttributeCount = pPublicKeyKeyTemplate->size;
+		params.pPrivateKeyTemplate = pPrivateKeyTemplate->items;
+		params.ulPrivateKeyAttributeCount = pPrivateKeyTemplate->size;
+		params.hPublicKey = 0;
+		params.hPrivateKey = 0;
+
+		mechanism.pParameter = &params;
+		mechanism.ulParameterLen = sizeof(params);
+
+		CHECK_PKCS11_RV(functionList->C_DeriveKey(
+			hSession,
+			&mechanism,
+			hBaseKey,
+			NULL, 0,
+			NULL
+		));
+
+		*pPublicKey = params.hPublicKey;
+		*pPrivateKey = params.hPrivateKey;
+
+	}
+	CATCH_ERROR;
+}
+
+void PKCS11::DeriveBIP32Child(
+	CK_SESSION_HANDLE hSession,
+	CK_OBJECT_HANDLE hBaseKey,
+	Scoped<Attributes> publicTmpl,
+	Scoped<Attributes> privateTmpl, CK_OBJECT_HANDLE_PTR pPublicKey, CK_OBJECT_HANDLE_PTR pPrivateKey, std::vector<CK_ULONG> &path
+
+) {
+	try {
+		auto pPublicKeyKeyTemplate = publicTmpl->Get();
+		auto pPrivateKeyTemplate = privateTmpl->Get();
+
+		CK_MECHANISM mechanism;
+
+		mechanism.mechanism = CKM_BIP32_CHILD_DERIVE;
+
+		CK_BIP32_CHILD_DERIVE_PARAMS params;
+		params.pPublicKeyTemplate = pPublicKeyKeyTemplate->items;
+		params.ulPublicKeyAttributeCount = pPublicKeyKeyTemplate->size;
+		params.pPrivateKeyTemplate = pPrivateKeyTemplate->items;
+		params.ulPrivateKeyAttributeCount = pPrivateKeyTemplate->size;
+		params.pulPath = &path[0];
+		params.ulPathLen = path.size();
+		params.hPublicKey = 0;
+		params.hPrivateKey = 0;
+
+		mechanism.pParameter = &params;
+		mechanism.ulParameterLen = sizeof(params);
+
+		CHECK_PKCS11_RV(functionList->C_DeriveKey(
+			hSession,
+			&mechanism,
+			hBaseKey,
+			NULL, 0,
+			NULL
+		));
+
+		*pPublicKey = params.hPublicKey;
+		*pPrivateKey = params.hPrivateKey;
+
+	}
+	CATCH_ERROR;
+}

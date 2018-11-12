@@ -208,6 +208,8 @@ void WPKCS11::Init(Handle<Object> exports) {
 	SET_PKCS11_METHOD(C_DeriveKey);
 	SET_PKCS11_METHOD(C_SeedRandom);
 	SET_PKCS11_METHOD(C_GenerateRandom);
+	SET_PKCS11_METHOD(DeriveBIP32Master);
+	SET_PKCS11_METHOD(DeriveBIP32Child);
 
 	constructor().Reset(Nan::GetFunction(tpl).ToLocalChecked());
 
@@ -1308,6 +1310,79 @@ NAN_METHOD(WPKCS11::C_GenerateRandom) {
 		__pkcs11->C_GenerateRandom(hSession, buffer, bufferLen);
 
 		info.GetReturnValue().Set(info[1]);
+	}
+	CATCH_V8_ERROR;
+}
+
+NAN_METHOD(WPKCS11::DeriveBIP32Master) {
+	try {
+		GET_SESSION_HANDLE(hSession, 0);
+		GET_OBJECT_HANDLE(hObject, 1);
+		GET_TEMPLATE_R(publicKeyTmpl, 2);
+		GET_TEMPLATE_R(privateKeyTmpl, 3);
+
+		int CALLBACK_INDEX = 4;
+
+		UNWRAP_PKCS11;
+
+		CK_OBJECT_HANDLE hPrivateKey;
+		CK_OBJECT_HANDLE hPublicKey;
+
+		if (!info[CALLBACK_INDEX]->IsFunction()) {
+
+			__pkcs11->DeriveBIP32Master(hSession, hObject, publicKeyTmpl, privateKeyTmpl, &hPublicKey, &hPrivateKey);
+
+			Local<Object> v8Result = Nan::New<Object>();
+			v8Result->Set(Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(hPrivateKey));
+			v8Result->Set(Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(hPublicKey));
+
+			info.GetReturnValue().Set(v8Result);
+		} else {
+			std::vector<CK_ULONG> path;
+			Nan::Callback *callback = new Nan::Callback(info[CALLBACK_INDEX].As<Function>());
+			Nan::AsyncQueueWorker(new AsyncDeriveBIP32(callback, __pkcs11, ASYNC_BIP32_MASTER, hSession, hObject, publicKeyTmpl, privateKeyTmpl, path));
+		}
+
+	}
+	CATCH_V8_ERROR;
+}
+
+NAN_METHOD(WPKCS11::DeriveBIP32Child) {
+	try {
+		GET_SESSION_HANDLE(hSession, 0);
+		GET_OBJECT_HANDLE(hObject, 1);
+		GET_TEMPLATE_R(publicKeyTmpl, 2);
+		GET_TEMPLATE_R(privateKeyTmpl, 3);
+
+		v8::Local<v8::Array> jsArr = v8::Local<v8::Array>::Cast(info[4]);
+		std::vector<CK_ULONG> path;
+		for (unsigned int i = 0; i < jsArr->Length(); i++) {
+			v8::Local<v8::Value> jsElement = jsArr->Get(i);
+			CK_ULONG number = jsElement->NumberValue();
+			path.push_back(number);
+		}
+
+		int CALLBACK_INDEX = 5;
+
+		UNWRAP_PKCS11;
+
+		CK_OBJECT_HANDLE hPrivateKey;
+		CK_OBJECT_HANDLE hPublicKey;
+
+		if (!info[CALLBACK_INDEX]->IsFunction()) {
+
+			__pkcs11->DeriveBIP32Child(hSession, hObject, publicKeyTmpl, privateKeyTmpl, &hPublicKey, &hPrivateKey, path);
+
+			Local<Object> v8Result = Nan::New<Object>();
+			v8Result->Set(Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(hPrivateKey));
+			v8Result->Set(Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(hPublicKey));
+			info.GetReturnValue().Set(v8Result);
+		} else {
+			Nan::Callback *callback = new Nan::Callback(info[CALLBACK_INDEX].As<Function>());
+			Nan::AsyncQueueWorker(new AsyncDeriveBIP32(callback, __pkcs11, ASYNC_BIP32_CHILD, hSession, hObject, publicKeyTmpl, privateKeyTmpl, path));
+		}
+
+
 	}
 	CATCH_V8_ERROR;
 }

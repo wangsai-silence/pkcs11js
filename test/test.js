@@ -5,12 +5,13 @@ const pkcs11 = require("../index");
 // const libPath = "C:\\Windows\\System32\\jcPKCS11.dll";
 // const libPath = "C:\\tmp\\rtpkcs11ecp.dll";
 // const libPath = "/usr/local/lib/softhsm/libsofthsm2.so";
-// const libPath = "/usr/safenet/lunaclient/lib/libCryptoki2_64.so";
-const libPath = "/usr/local/lib/softhsm/libsofthsm2.so"; // travis-ci test
+const libPath = "/usr/safenet/lunaclient/lib/libCryptoki2_64.so";
+//const libPath = "/usr/safenet/lunaclient/lib/libcklog2.so";
+//const libPath = "/usr/local/lib/softhsm/libsofthsm2.so"; // travis-ci test
 
 const timeout = 10000; // 10s
 
-const tokenPin = "12345"; // travis-ci test
+const tokenPin = "userpin"; // travis-ci test
 const slot_index = 0;
 
 const mod_assert = "Module is not initialized";
@@ -683,4 +684,188 @@ describe("PKCS11", () => {
             mod.C_Finalize();
         });
     });
+
+    context("BIP32", () => {
+
+        function generateSeed() {
+            var seedTemplate = [
+                {type: pkcs11.CKA_KEY_TYPE, value: pkcs11.CKK_GENERIC_SECRET},
+                {type: pkcs11.CKA_TOKEN, value: false},
+                {type: pkcs11.CKA_DERIVE, value: true},
+                {type: pkcs11.CKA_PRIVATE, value: true},
+                {type: pkcs11.CKA_EXTRACTABLE, value: false},
+                {type: pkcs11.CKA_MODIFIABLE, value: false},
+                {type: pkcs11.CKA_VALUE_LEN, value: 32}
+            ];
+
+            return _mod.C_GenerateKey(_session, { mechanism: pkcs11.CKM_GENERIC_SECRET_KEY_GEN }, seedTemplate);
+        }
+
+        function injectSeed(seed) {
+            var aesTemplate = [
+                {type: pkcs11.CKA_TOKEN, value: false},
+                {type: pkcs11.CKA_ENCRYPT, value: true},
+                {type: pkcs11.CKA_UNWRAP, value: true},
+                {type: pkcs11.CKA_PRIVATE, value: true},
+                {type: pkcs11.CKA_VALUE_LEN, value: 32}
+            ];
+
+            var aes = _mod.C_GenerateKey(_session, { mechanism: pkcs11.CKM_AES_KEY_GEN }, aesTemplate);
+
+            var mech = {
+                mechanism: pkcs11.CKM_AES_CBC,
+                parameter: new Buffer([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16])
+            };
+
+            _mod.C_EncryptInit(_session, mech, aes);
+            var encrypted = _mod.C_Encrypt(_session, seed, new Buffer(200));
+
+            var unwrapTemplate = [
+                {type: pkcs11.CKA_CLASS, value: pkcs11.CKO_SECRET_KEY},
+                {type: pkcs11.CKA_KEY_TYPE, value: pkcs11.CKK_GENERIC_SECRET},
+                {type: pkcs11.CKA_TOKEN, value: false},
+                {type: pkcs11.CKA_DERIVE, value: true},
+                {type: pkcs11.CKA_EXTRACTABLE, value: false},
+                {type: pkcs11.CKA_MODIFIABLE, value: false},
+                {type: pkcs11.CKA_PRIVATE, value: true},
+                {type: pkcs11.CKA_VALUE_LEN, value: seed.length}
+            ];
+
+            return _mod.C_UnwrapKey(_session, mech, aes, encrypted, unwrapTemplate);
+        }
+
+        function deriveMaster(seed, callback) {
+            var publicKeyTemplate = [
+                                { type: pkcs11.CKA_TOKEN, value: false },
+                                { type: pkcs11.CKA_PRIVATE, value: true },
+                                { type: pkcs11.CKA_VERIFY, value: true },
+                                { type: pkcs11.CKA_DERIVE, value: true },
+                                { type: pkcs11.CKA_MODIFIABLE, value: false },
+            ];
+            var privateKeyTemplate = [
+                                { type: pkcs11.CKA_TOKEN, value: false },
+                                { type: pkcs11.CKA_PRIVATE, value: true },
+                                { type: pkcs11.CKA_SIGN, value: true },
+                                { type: pkcs11.CKA_DERIVE, value: true },
+                                { type: pkcs11.CKA_MODIFIABLE, value: false },
+                                { type: pkcs11.CKA_EXTRACTABLE, value: false },
+            ];
+
+            if (callback) {
+                _mod.DeriveBIP32Master(_session, seed, publicKeyTemplate, privateKeyTemplate, callback);
+            } else {
+                return _mod.DeriveBIP32Master(_session, seed, publicKeyTemplate, privateKeyTemplate);
+            }
+        }
+
+        function deriveChild(masterPrivate, path, callback) {
+            var publicKeyTemplate = [
+                                { type: pkcs11.CKA_TOKEN, value: false },
+                                { type: pkcs11.CKA_PRIVATE, value: true },
+                                { type: pkcs11.CKA_VERIFY, value: true },
+                                { type: pkcs11.CKA_DERIVE, value: false },
+                                { type: pkcs11.CKA_MODIFIABLE, value: false },
+            ];
+            var privateKeyTemplate = [
+                                { type: pkcs11.CKA_TOKEN, value: false },
+                                { type: pkcs11.CKA_PRIVATE, value: true },
+                                { type: pkcs11.CKA_SIGN, value: true },
+                                { type: pkcs11.CKA_DERIVE, value: false },
+                                { type: pkcs11.CKA_MODIFIABLE, value: false },
+                                { type: pkcs11.CKA_EXTRACTABLE, value: false },
+            ];
+            if (callback) {
+                _mod.DeriveBIP32Child(_session, masterPrivate, publicKeyTemplate, privateKeyTemplate, path, callback);
+            } else {
+                return _mod.DeriveBIP32Child(_session, masterPrivate, publicKeyTemplate, privateKeyTemplate, path);
+            }
+        }
+
+        function signVerify(keyPair) {
+            var hash = new Buffer("02bea3145fecbcd0eb1c8a86b5b5c7d71765db84d98e31f9939c2671a6f01603", "hex");
+            var mech = {
+                mechanism: pkcs11.CKM_ECDSA,
+            };
+            _mod.C_SignInit(_session, mech, keyPair['privateKey'])
+            var sig = _mod.C_Sign(_session, hash, Buffer.alloc(64));
+            _mod.C_VerifyInit(_session, mech, keyPair['publicKey'])
+            _mod.C_Verify(_session, hash, sig)
+        }
+
+        function parsePath(path) {
+            var pathArray = [];
+            var split = path.split("/");
+            for (var i = 1; i < split.length; i++) {
+                var index = split[i];
+                var num = 0;
+                if (split[i].endsWith("'")) {
+                    num = 0x80000000;
+                    index = index.replace("'", "");
+                }
+                num += parseInt(index, 10);
+                pathArray.push(num);
+            }
+            return pathArray;
+        }
+
+        function getECPoint(publicKey) {
+            return _mod.C_GetAttributeValue(_session, publicKey, [{ type: pkcs11.CKA_EC_POINT }])[0]["value"];
+        }
+
+        it("derive/sign/verify", () => {
+
+
+            var seed = generateSeed();
+            var master = deriveMaster(seed);
+            var child = deriveChild(master['privateKey'], [0x80000000 + 44, 0x80000000 + 60, 0x80000000 + 0, 0, 0]);
+            signVerify(child);
+
+            var vector = [
+                ["000102030405060708090a0b0c0d0e0f", "m/0'", "035a784662a4a20a65bf6aab9ae98a6c068a81c52e4b032c0fb5400c706cfccc56"],
+                ["000102030405060708090a0b0c0d0e0f", "m/0'/1", "03501e454bf00751f24b1b489aa925215d66af2234e3891c3b21a52bedb3cd711c"],
+                ["000102030405060708090a0b0c0d0e0f", "m/0'/1/2'", "0357bfe1e341d01c69fe5654309956cbea516822fba8a601743a012a7896ee8dc2"],
+                ["000102030405060708090a0b0c0d0e0f", "m/0'/1/2'/2", "02e8445082a72f29b75ca48748a914df60622a609cacfce8ed0e35804560741d29"],
+                ["000102030405060708090a0b0c0d0e0f", "m/0'/1/2'/2/1000000000", "022a471424da5e657499d1ff51cb43c47481a03b1e77f951fe64cec9f5a48f7011"],
+                ["fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542", "m/0", "02fc9e5af0ac8d9b3cecfe2a888e2117ba3d089d8585886c9c826b6b22a98d12ea"],
+                ["fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542", "m/0/2147483647'", "03c01e7425647bdefa82b12d9bad5e3e6865bee0502694b94ca58b666abc0a5c3b"],
+                ["fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542", "m/0/2147483647'/1", "03a7d1d856deb74c508e05031f9895dab54626251b3806e16b4bd12e781a7df5b9"],
+                ["fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542", "m/0/2147483647'/1/2147483646'", "02d2b36900396c9282fa14628566582f206a5dd0bcc8d5e892611806cafb0301f0"],
+                ["fffcf9f6f3f0edeae7e4e1dedbd8d5d2cfccc9c6c3c0bdbab7b4b1aeaba8a5a29f9c999693908d8a8784817e7b7875726f6c696663605d5a5754514e4b484542", "m/0/2147483647'/1/2147483646'/2", "024d902e1a2fc7a8755ab5b694c575fce742c48d9ff192e63df5193e4c7afe1f9c"],
+            ];
+
+            for(var i = 0; i < vector.length; i++) {
+                var seed = injectSeed(new Buffer(vector[i][0], "hex"));
+                var master = deriveMaster(seed);
+                var path = parsePath(vector[i][1]);
+                var child = deriveChild(master["privateKey"], path);
+                var ecPoint = getECPoint(child["publicKey"]);
+                ecPoint = ecPoint.slice(3, 3+32);
+                var expected = new Buffer(vector[i][2], "hex");
+                expected = expected.slice(1, expected.length);
+                assert.equal(true, expected.equals(ecPoint));
+                signVerify(child);
+            }
+
+        }).timeout(timeout);
+
+        it("derive async", (done) => {
+            var seed = generateSeed();
+            deriveMaster(seed, (err, master) => {
+                if (err) {
+                    throw err;
+                } else {
+                    deriveChild(master['privateKey'], [0x80000000 + 44, 0x80000000 + 60, 0x80000000 + 0, 0, 0], (err, child) => {
+                        if (err) {
+                            throw err;
+                        } else {
+                            signVerify(child);
+                            done();
+                        }
+                    });
+                }
+            });
+        }).timeout(timeout);
+    });
+
+
 });

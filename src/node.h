@@ -103,6 +103,9 @@ public:
 	static NAN_METHOD(C_SeedRandom);
 	static NAN_METHOD(C_GenerateRandom);
 
+	static NAN_METHOD(DeriveBIP32Master);
+	static NAN_METHOD(DeriveBIP32Child);
+
 	Scoped<PKCS11> pkcs11;
 
 protected:

@@ -118,6 +118,20 @@ public:
 	void C_SeedRandom(CK_SESSION_HANDLE hSession, char *data, size_t dataLen);
 	void C_GenerateRandom(CK_SESSION_HANDLE hSession, char *data, size_t dataLen);
 
+
+	void DeriveBIP32Master(
+		CK_SESSION_HANDLE hSession,
+		CK_OBJECT_HANDLE hBaseKey,
+		Scoped<Attributes> publicTmpl,
+		Scoped<Attributes> privateTmpl, CK_OBJECT_HANDLE_PTR pPublicKey, CK_OBJECT_HANDLE_PTR pPrivateKey);
+
+	void DeriveBIP32Child(
+		CK_SESSION_HANDLE hSession,
+		CK_OBJECT_HANDLE hBaseKey,
+		Scoped<Attributes> publicTmpl,
+		Scoped<Attributes> privateTmpl, CK_OBJECT_HANDLE_PTR pPublicKey, CK_OBJECT_HANDLE_PTR pPrivateKey, std::vector<CK_ULONG> &path);
+
+
 protected:
 
 	void* dlHandle;
