@@ -1,7 +1,18 @@
 #include <uv.h>
 #include <node_object_wrap.h>
 
+// From https://github.com/nodejs/nan/issues/807#issuecomment-581536991
+#if defined(__GNUC__) && __GNUC__ >= 8
+#define DISABLE_WCAST_FUNCTION_TYPE _Pragma("GCC diagnostic push") _Pragma("GCC diagnostic ignored \"-Wcast-function-type\"")
+#define DISABLE_WCAST_FUNCTION_TYPE_END _Pragma("GCC diagnostic pop")
+#else
+#define DISABLE_WCAST_FUNCTION_TYPE
+#define DISABLE_WCAST_FUNCTION_TYPE_END
+#endif
+
+DISABLE_WCAST_FUNCTION_TYPE
 #include <nan.h>
+DISABLE_WCAST_FUNCTION_TYPE_END
 
 #include "pkcs11/pkcs11.h"
 
@@ -19,13 +30,13 @@ public:
 		return Nan::NewInstance(cons, argc, argv).ToLocalChecked();
 	}
 
-	static void Init(v8::Handle<v8::Object> exports);
+	static NAN_MODULE_INIT(Init);
 
-    static NAN_PROPERTY_GETTER(GetLibPath);
+	static NAN_PROPERTY_GETTER(GetLibPath);
 
 	static NAN_METHOD(New);
 	static NAN_METHOD(Load);
-    static NAN_METHOD(Close);
+	static NAN_METHOD(Close);
 
 	// PKCS11
 	static NAN_METHOD(C_Initialize);
@@ -102,6 +113,9 @@ public:
 	/* Random number generation */
 	static NAN_METHOD(C_SeedRandom);
 	static NAN_METHOD(C_GenerateRandom);
+
+	/* Event slot function */
+	static NAN_METHOD(C_WaitForSlotEvent);
 
 	static NAN_METHOD(DeriveBIP32Master);
 	static NAN_METHOD(DeriveBIP32Child);

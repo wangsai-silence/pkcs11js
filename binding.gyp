@@ -31,7 +31,7 @@
                 [
                     'OS=="mac"', {
                         'xcode_settings': {
-                            'OTHER_CPLUSPLUSFLAGS': ['-std=c++11', '-stdlib=libc++', '-v'],
+                            'OTHER_CPLUSPLUSFLAGS': ['-std=c++14', '-stdlib=libc++', '-v'],
                             'OTHER_CFLAGS': ['-ObjC++'],
                             'OTHER_LDFLAGS': ['-stdlib=libc++'],
                             'MACOSX_DEPLOYMENT_TARGET': '10.7',
@@ -45,6 +45,7 @@
                         'msvs_settings': {
                             'VCCLCompilerTool': {
                                 'ExceptionHandling': 1,
+                                'AdditionalOptions': [ '-std:c++17', ],
                             }
                         }
                     }

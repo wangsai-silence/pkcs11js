@@ -1,7 +1,7 @@
 #include "const.h"
 
 void declare_attributes(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
 
 	SET_CONST(target, CKA_CLASS);
 	SET_CONST(target, CKA_TOKEN);
@@ -113,7 +113,7 @@ void declare_attributes(Local<Object> target) {
 }
 
 void declare_flags(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
 
 	SET_CONST(target, CKF_RW_SESSION);
 	SET_CONST(target, CKF_SERIAL_SESSION);
@@ -152,10 +152,12 @@ void declare_flags(Local<Object> target) {
 	SET_CONST(target, CKF_SO_PIN_TO_BE_CHANGED);
 	SET_CONST(target, CKF_ERROR_STATE);
 
+	// Event flags
+	SET_CONST(target, CKF_DONT_BLOCK);
 }
 
 void declare_objects(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
 
 	SET_CONST(target, CKO_DATA);
 	SET_CONST(target, CKO_CERTIFICATE);
@@ -170,7 +172,8 @@ void declare_objects(Local<Object> target) {
 }
 
 void declare_ket_types(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
+    
 	SET_CONST(target, CKK_RSA);
 	SET_CONST(target, CKK_DSA);
 	SET_CONST(target, CKK_DH);
@@ -218,7 +221,8 @@ void declare_ket_types(Local<Object> target) {
 }
 
 void declare_mechanisms(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
+    
 	SET_CONST(target, CKM_RSA_PKCS_KEY_PAIR_GEN);
 	SET_CONST(target, CKM_RSA_PKCS);
 	SET_CONST(target, CKM_RSA_9796);
@@ -520,14 +524,16 @@ void declare_mechanisms(Local<Object> target) {
 }
 
 void declare_certificates(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
+    
 	SET_CONST(target, CKC_WTLS);
 	SET_CONST(target, CKC_X_509);
 	SET_CONST(target, CKC_X_509_ATTR_CERT);
 }
 
 void declare_mgf(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
+    
 	SET_CONST(target, CKG_MGF1_SHA1);
 	SET_CONST(target, CKG_MGF1_SHA256);
 	SET_CONST(target, CKG_MGF1_SHA384);
@@ -536,7 +542,8 @@ void declare_mgf(Local<Object> target) {
 }
 
 void declare_kdf(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
+    
 	SET_CONST(target, CKD_NULL);
 	SET_CONST(target, CKD_SHA1_KDF);
 	SET_CONST(target, CKD_SHA1_KDF_ASN1);
@@ -549,7 +556,8 @@ void declare_kdf(Local<Object> target) {
 }
 
 void declare_params(Local<Object> target) {
-	Nan::HandleScope();
+	Nan::HandleScope scope;
+    
 	SET_CONST(target, CK_PARAMS_AES_CBC);
 	SET_CONST(target, CK_PARAMS_AES_CCM);
 	SET_CONST(target, CK_PARAMS_AES_GCM);
@@ -560,14 +568,113 @@ void declare_params(Local<Object> target) {
 }
 
 void declare_initialize_flags(Local<Object> target) {
-    Nan::HandleScope();
+    Nan::HandleScope scope;
+    
     SET_CONST(target, CKF_LIBRARY_CANT_CREATE_OS_THREADS);
     SET_CONST(target, CKF_OS_LOCKING_OK);
 }
 
 void declare_user_types(Local<Object> target) {
-    Nan::HandleScope();
+    Nan::HandleScope scope;
+    
     SET_CONST(target, CKU_SO);
     SET_CONST(target, CKU_USER);
     SET_CONST(target, CKU_CONTEXT_SPECIFIC);
+}
+
+void declare_result_values(Local<Object> target) {
+    Nan::HandleScope scope;
+    
+		SET_CONST(target, CKR_OK);
+    SET_CONST(target, CKR_CANCEL);
+    SET_CONST(target, CKR_HOST_MEMORY);
+    SET_CONST(target, CKR_SLOT_ID_INVALID);
+    SET_CONST(target, CKR_GENERAL_ERROR);
+    SET_CONST(target, CKR_FUNCTION_FAILED);
+    SET_CONST(target, CKR_ARGUMENTS_BAD);
+    SET_CONST(target, CKR_NO_EVENT);
+    SET_CONST(target, CKR_NEED_TO_CREATE_THREADS);
+    SET_CONST(target, CKR_CANT_LOCK);
+    SET_CONST(target, CKR_ATTRIBUTE_READ_ONLY);
+    SET_CONST(target, CKR_ATTRIBUTE_SENSITIVE);
+    SET_CONST(target, CKR_ATTRIBUTE_TYPE_INVALID);
+    SET_CONST(target, CKR_ATTRIBUTE_VALUE_INVALID);
+    SET_CONST(target, CKR_DATA_INVALID);
+    SET_CONST(target, CKR_DATA_LEN_RANGE);
+    SET_CONST(target, CKR_DEVICE_ERROR);
+    SET_CONST(target, CKR_DEVICE_MEMORY);
+    SET_CONST(target, CKR_DEVICE_REMOVED);
+    SET_CONST(target, CKR_ENCRYPTED_DATA_INVALID);
+    SET_CONST(target, CKR_ENCRYPTED_DATA_LEN_RANGE);
+    SET_CONST(target, CKR_FUNCTION_CANCELED);
+    SET_CONST(target, CKR_FUNCTION_NOT_PARALLEL);
+    SET_CONST(target, CKR_FUNCTION_NOT_SUPPORTED);
+    SET_CONST(target, CKR_KEY_HANDLE_INVALID);
+    SET_CONST(target, CKR_KEY_SIZE_RANGE);
+    SET_CONST(target, CKR_KEY_TYPE_INCONSISTENT);
+    SET_CONST(target, CKR_KEY_NOT_NEEDED);
+    SET_CONST(target, CKR_KEY_CHANGED);
+    SET_CONST(target, CKR_KEY_NEEDED);
+    SET_CONST(target, CKR_KEY_INDIGESTIBLE);
+    SET_CONST(target, CKR_KEY_FUNCTION_NOT_PERMITTED);
+    SET_CONST(target, CKR_KEY_NOT_WRAPPABLE);
+    SET_CONST(target, CKR_KEY_UNEXTRACTABLE);
+    SET_CONST(target, CKR_MECHANISM_INVALID);
+    SET_CONST(target, CKR_MECHANISM_PARAM_INVALID);
+    SET_CONST(target, CKR_OBJECT_HANDLE_INVALID);
+    SET_CONST(target, CKR_OPERATION_ACTIVE);
+    SET_CONST(target, CKR_OPERATION_NOT_INITIALIZED);
+    SET_CONST(target, CKR_PIN_INCORRECT);
+    SET_CONST(target, CKR_PIN_INVALID);
+    SET_CONST(target, CKR_PIN_LEN_RANGE);
+    SET_CONST(target, CKR_PIN_EXPIRED);
+    SET_CONST(target, CKR_PIN_LOCKED);
+    SET_CONST(target, CKR_SESSION_CLOSED);
+    SET_CONST(target, CKR_SESSION_COUNT);
+    SET_CONST(target, CKR_SESSION_HANDLE_INVALID);
+    SET_CONST(target, CKR_SESSION_PARALLEL_NOT_SUPPORTED);
+    SET_CONST(target, CKR_SESSION_READ_ONLY);
+    SET_CONST(target, CKR_SESSION_EXISTS);
+    SET_CONST(target, CKR_SESSION_READ_ONLY_EXISTS);
+    SET_CONST(target, CKR_SESSION_READ_WRITE_SO_EXISTS);
+    SET_CONST(target, CKR_SIGNATURE_INVALID);
+    SET_CONST(target, CKR_SIGNATURE_LEN_RANGE);
+    SET_CONST(target, CKR_TEMPLATE_INCOMPLETE);
+    SET_CONST(target, CKR_TEMPLATE_INCONSISTENT);
+    SET_CONST(target, CKR_TOKEN_NOT_PRESENT);
+    SET_CONST(target, CKR_TOKEN_NOT_RECOGNIZED);
+    SET_CONST(target, CKR_TOKEN_WRITE_PROTECTED);
+    SET_CONST(target, CKR_UNWRAPPING_KEY_HANDLE_INVALID);
+    SET_CONST(target, CKR_UNWRAPPING_KEY_SIZE_RANGE);
+    SET_CONST(target, CKR_UNWRAPPING_KEY_TYPE_INCONSISTENT);
+    SET_CONST(target, CKR_USER_ALREADY_LOGGED_IN);
+    SET_CONST(target, CKR_USER_NOT_LOGGED_IN);
+    SET_CONST(target, CKR_USER_PIN_NOT_INITIALIZED);
+    SET_CONST(target, CKR_USER_TYPE_INVALID);
+    SET_CONST(target, CKR_USER_ANOTHER_ALREADY_LOGGED_IN);
+    SET_CONST(target, CKR_USER_TOO_MANY_TYPES);
+    SET_CONST(target, CKR_WRAPPED_KEY_INVALID);
+    SET_CONST(target, CKR_WRAPPED_KEY_LEN_RANGE);
+    SET_CONST(target, CKR_WRAPPING_KEY_HANDLE_INVALID);
+    SET_CONST(target, CKR_WRAPPING_KEY_SIZE_RANGE);
+    SET_CONST(target, CKR_WRAPPING_KEY_TYPE_INCONSISTENT);
+    SET_CONST(target, CKR_RANDOM_SEED_NOT_SUPPORTED);
+    SET_CONST(target, CKR_RANDOM_NO_RNG);
+    SET_CONST(target, CKR_DOMAIN_PARAMS_INVALID);
+    SET_CONST(target, CKR_BUFFER_TOO_SMALL);
+    SET_CONST(target, CKR_SAVED_STATE_INVALID);
+    SET_CONST(target, CKR_INFORMATION_SENSITIVE);
+    SET_CONST(target, CKR_STATE_UNSAVEABLE);
+    SET_CONST(target, CKR_CRYPTOKI_NOT_INITIALIZED);
+    SET_CONST(target, CKR_CRYPTOKI_ALREADY_INITIALIZED);
+    SET_CONST(target, CKR_MUTEX_BAD);
+    SET_CONST(target, CKR_MUTEX_NOT_LOCKED);
+    SET_CONST(target, CKR_NEW_PIN_MODE);
+    SET_CONST(target, CKR_NEXT_OTP);
+    SET_CONST(target, CKR_EXCEEDED_MAX_ITERATIONS);
+    SET_CONST(target, CKR_FIPS_SELF_TEST_FAILED);
+    SET_CONST(target, CKR_LIBRARY_LOAD_FAILED);
+    SET_CONST(target, CKR_PIN_TOO_WEAK);
+    SET_CONST(target, CKR_PUBLIC_KEY_INVALID);
+    SET_CONST(target, CKR_FUNCTION_REJECTED);
 }
