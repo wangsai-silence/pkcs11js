@@ -1,63 +1,73 @@
 #include "./async.h"
 
-static Local<Object> handle_to_v8(CK_ULONG handle) {
+static Local<Object> handle_to_v8(CK_ULONG handle)
+{
 	Nan::EscapableHandleScope scope;
 
 	Local<Object> v8Buffer = Nan::NewBuffer(sizeof(CK_ULONG)).ToLocalChecked();
-	char* buf = node::Buffer::Data(v8Buffer);
+	char *buf = node::Buffer::Data(v8Buffer);
 
 	memcpy(buf, &handle, sizeof(CK_ULONG));
 
 	return scope.Escape(v8Buffer);
 }
 
-void AsyncGenerateKey::Execute() {
-	try {
+void AsyncGenerateKey::Execute()
+{
+	try
+	{
 		hKey = pkcs11->C_GenerateKey(hSession, mech, tmpl);
 	}
-	catch (Scoped<Error> e) {
+	catch (Scoped<Error> e)
+	{
 		this->SetErrorMessage(e->ToString()->c_str());
 	}
 }
 
-void AsyncGenerateKey::HandleOKCallback() {
+void AsyncGenerateKey::HandleOKCallback()
+{
 	Nan::HandleScope scope;
 
 	v8::Local<v8::Value> argv[] = {
 		Nan::Null(),
-		handle_to_v8(hKey)
-	};
+		handle_to_v8(hKey)};
 
 	callback->Call(2, argv, async_resource);
 }
 
-void AsyncGenerateKeyPair::Execute() {
-	try {
+void AsyncGenerateKeyPair::Execute()
+{
+	try
+	{
 		keyPair = pkcs11->C_GenerateKeyPair(hSession, mech, publicKeyTemplate, privateKeyTemplate);
 	}
-	catch (Scoped<Error> e) {
+	catch (Scoped<Error> e)
+	{
 		this->SetErrorMessage(e->ToString()->c_str());
 	}
 }
 
-void AsyncGenerateKeyPair::HandleOKCallback() {
+void AsyncGenerateKeyPair::HandleOKCallback()
+{
 	Nan::HandleScope scope;
 
 	Local<Object> v8KeyPair = Nan::New<Object>();
-    Nan::Set(v8KeyPair, Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(keyPair->privateKey));
-    Nan::Set(v8KeyPair, Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(keyPair->publicKey));
+	Nan::Set(v8KeyPair, Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(keyPair->privateKey));
+	Nan::Set(v8KeyPair, Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(keyPair->publicKey));
 
 	v8::Local<v8::Value> argv[] = {
 		Nan::Null(),
-		v8KeyPair
-	};
+		v8KeyPair};
 
 	callback->Call(2, argv, async_resource);
 }
 
-void AsyncCrypto::Execute() {
-	try {
-		switch (type) {
+void AsyncCrypto::Execute()
+{
+	try
+	{
+		switch (type)
+		{
 		case ASYNC_CRYPTO_DIGEST:
 			result = pkcs11->C_Digest(hSession, input, output);
 			break;
@@ -75,41 +85,48 @@ void AsyncCrypto::Execute() {
 			break;
 		}
 	}
-	catch (Scoped<Error> e) {
+	catch (Scoped<Error> e)
+	{
 		this->SetErrorMessage(e->ToString()->c_str());
 	}
 }
 
-void AsyncCrypto::HandleOKCallback() {
+void AsyncCrypto::HandleOKCallback()
+{
 	Nan::HandleScope scope;
 
 	Local<Value> v8Result;
 
-	if (type == ASYNC_CRYPTO_VERIFY) {
+	if (type == ASYNC_CRYPTO_VERIFY)
+	{
 		v8Result = Nan::New<Boolean>(true);
 	}
-	else {
+	else
+	{
 		v8Result = Nan::CopyBuffer(result->c_str(), (uint32_t)result->length()).ToLocalChecked();
 	}
 
 	v8::Local<v8::Value> argv[] = {
 		Nan::Null(),
-		v8Result
-	};
+		v8Result};
 
 	callback->Call(2, argv, async_resource);
 }
 
-void AsyncWrapKey::Execute() {
-	try {
+void AsyncWrapKey::Execute()
+{
+	try
+	{
 		result = pkcs11->C_WrapKey(hSession, mech, hWrappingKey, hKey, wrappedKey);
 	}
-	catch (Scoped<Error> e) {
+	catch (Scoped<Error> e)
+	{
 		this->SetErrorMessage(e->ToString()->c_str());
 	}
 }
 
-void AsyncWrapKey::HandleOKCallback() {
+void AsyncWrapKey::HandleOKCallback()
+{
 	Nan::HandleScope scope;
 
 	Local<Value> v8Result;
@@ -118,22 +135,25 @@ void AsyncWrapKey::HandleOKCallback() {
 
 	v8::Local<v8::Value> argv[] = {
 		Nan::Null(),
-		v8Result
-	};
+		v8Result};
 
 	callback->Call(2, argv, async_resource);
 }
 
-void AsyncUnwrapKey::Execute() {
-	try {
+void AsyncUnwrapKey::Execute()
+{
+	try
+	{
 		result = pkcs11->C_UnwrapKey(hSession, mech, hUnwrappingKey, wrappedKey, tmpl);
 	}
-	catch (Scoped<Error> e) {
+	catch (Scoped<Error> e)
+	{
 		this->SetErrorMessage(e->ToString()->c_str());
 	}
 }
 
-void AsyncUnwrapKey::HandleOKCallback() {
+void AsyncUnwrapKey::HandleOKCallback()
+{
 	Nan::HandleScope scope;
 
 	Local<Value> v8Result;
@@ -142,22 +162,25 @@ void AsyncUnwrapKey::HandleOKCallback() {
 
 	v8::Local<v8::Value> argv[] = {
 		Nan::Null(),
-		v8Result
-	};
+		v8Result};
 
 	callback->Call(2, argv, async_resource);
 }
 
-void AsyncDeriveKey::Execute() {
-	try {
+void AsyncDeriveKey::Execute()
+{
+	try
+	{
 		result = pkcs11->C_DeriveKey(hSession, mech, hBaseKey, tmpl);
 	}
-	catch (Scoped<Error> e) {
+	catch (Scoped<Error> e)
+	{
 		this->SetErrorMessage(e->ToString()->c_str());
 	}
 }
 
-void AsyncDeriveKey::HandleOKCallback() {
+void AsyncDeriveKey::HandleOKCallback()
+{
 	Nan::HandleScope scope;
 
 	Local<Value> v8Result;
@@ -166,39 +189,42 @@ void AsyncDeriveKey::HandleOKCallback() {
 
 	v8::Local<v8::Value> argv[] = {
 		Nan::Null(),
-		v8Result
-	};
+		v8Result};
 
 	callback->Call(2, argv, async_resource);
 }
 
-void AsyncDeriveBIP32::Execute() {
-	try {
-		switch (type) {
-			case ASYNC_BIP32_MASTER:
-				pkcs11->DeriveBIP32Master(hSession, hBaseKey, publicKeyTemplate, privateKeyTemplate, &hPublicKey, &hPrivateKey);
-				break;
-			case ASYNC_BIP32_CHILD:
-				pkcs11->DeriveBIP32Child(hSession, hBaseKey, publicKeyTemplate, privateKeyTemplate, &hPublicKey, &hPrivateKey, path);
-				break;
+void AsyncDeriveBIP32::Execute()
+{
+	try
+	{
+		switch (type)
+		{
+		case ASYNC_BIP32_MASTER:
+			pkcs11->DeriveBIP32Master(hSession, hBaseKey, publicKeyTemplate, privateKeyTemplate, &hPublicKey, &hPrivateKey);
+			break;
+		case ASYNC_BIP32_CHILD:
+			pkcs11->DeriveBIP32Child(hSession, hBaseKey, publicKeyTemplate, privateKeyTemplate, &hPublicKey, &hPrivateKey, path);
+			break;
 		}
 	}
-	catch (Scoped<Error> e) {
+	catch (Scoped<Error> e)
+	{
 		this->SetErrorMessage(e->ToString()->c_str());
 	}
 }
 
-void AsyncDeriveBIP32::HandleOKCallback() {
-        Nan::HandleScope scope;
+void AsyncDeriveBIP32::HandleOKCallback()
+{
+	Nan::HandleScope scope;
 
-        Local<Object> v8KeyPair = Nan::New<Object>();
-        v8KeyPair->Set(Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(hPrivateKey));
-        v8KeyPair->Set(Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(hPublicKey));
+	Local<Object> v8KeyPair = Nan::New<Object>();
+	Nan::Set(v8KeyPair, Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(hPrivateKey));
+	Nan::Set(v8KeyPair, Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(hPublicKey));
 
-        v8::Local<v8::Value> argv[] = {
-                Nan::Null(),
-                v8KeyPair
-        };
+	v8::Local<v8::Value> argv[] = {
+		Nan::Null(),
+		v8KeyPair};
 
-        callback->Call(2, argv, async_resource);
+	callback->Call(2, argv, async_resource);
 }
