@@ -191,9 +191,9 @@ void AsyncDeriveBIP32::Execute() {
 void AsyncDeriveBIP32::HandleOKCallback() {
         Nan::HandleScope scope;
 
-        Local<Object> v8KeyPair = Nan::New<Object>();
-        v8KeyPair->Set(Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(hPrivateKey));
-        v8KeyPair->Set(Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(hPublicKey));
+		Local<Object> v8KeyPair = Nan::New<Object>();
+		Nan::Set(v8KeyPair, Nan::New(STR_PRIVATE_KEY).ToLocalChecked(), handle_to_v8(hPrivateKey));
+		Nan::Set(v8KeyPair, Nan::New(STR_PUBLIC_KEY).ToLocalChecked(), handle_to_v8(hPublicKey));
 
         v8::Local<v8::Value> argv[] = {
                 Nan::Null(),
