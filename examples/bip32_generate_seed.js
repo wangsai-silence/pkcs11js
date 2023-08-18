@@ -5,7 +5,7 @@ let pkcs11 = new pkcs11js.PKCS11();
 
 
 let lib = "/usr/safenet/lunaclient/lib/libCryptoki2_64.so"
-let pin = "Wangsai123!"
+let pin = "pin123!"
 
 function generateSeed(session) {
     let seedTemplate = [

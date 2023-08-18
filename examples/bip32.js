@@ -7,7 +7,7 @@ let pkcs11 = new pkcs11js.PKCS11();
 
 
 let lib = "/usr/safenet/lunaclient/lib/libCryptoki2_64.so"
-let pin = "Wangsai123!"
+let pin = "pin123!"
 let seedHandle = 55
 
 let secp256k1_N = new BN("FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEBAAEDCE6AF48A03BBFD25E8CD0364141", 16);
@@ -21,7 +21,7 @@ function deriveMaster(session, seed) {
         { type: pkcs11js.CKA_MODIFIABLE, value: false },
     ];
     let privateKeyTemplate = [
-        { type: pkcs11js.CKA_TOKEN, value: true },
+        { type: pkcs11js.CKA_TOKEN, value: false },
         { type: pkcs11js.CKA_SENSITIVE, value: true },
         { type: pkcs11js.CKA_PRIVATE, value: true },
         { type: pkcs11js.CKA_SIGN, value: true },
